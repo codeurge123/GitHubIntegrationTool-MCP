@@ -8,11 +8,8 @@ export const createApp = (server) => {
     app.use(express.json());
 
     app.get('/', (req, res) => {
-        res.json({
-            message: "Server is running",
-            // api: process.env.GITHUB_API_LOGIN // testing
-        })
-    })
+        res.send({ message: "Server is running" });
+    });
 
     app.post('/mcp', async (req, res) => {
         const transport = new StreamableHTTPServerTransport({
@@ -23,7 +20,11 @@ export const createApp = (server) => {
             await server.connect(transport);
             await transport.handleRequest(req, res, req.body);
         } catch (error) {
-            throw new Error(`Error handling request: ${error.message}`);
+            console.error("MCP request failed:", error);
+
+            if (!res.headersSent) {
+                res.status(500).json({ error: "MCP request failed" });
+            }
         } finally {
             transport.close();
         }
